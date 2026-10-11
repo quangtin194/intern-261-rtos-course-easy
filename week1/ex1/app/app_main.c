@@ -25,9 +25,11 @@ static const uint16_t gpio_blink_pin = (uint16_t)(1U << BLINK_GPIO_PIN);
 static void bringup_task(void *argument)
 {
     (void)argument;
+    volatile UBaseType_t stack_remaining = 0;
 
     for (;;) {
         HAL_GPIO_TogglePin(gpio_blink_port, gpio_blink_pin);
+        stack_remaining = uxTaskGetStackHighWaterMark(NULL);
         vTaskDelay(pdMS_TO_TICKS(BLINK_PERIOD_MS / 2));
     }
 }
