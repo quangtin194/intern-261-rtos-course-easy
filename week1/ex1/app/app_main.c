@@ -22,7 +22,7 @@ static const uint16_t gpio_blink_pin = (uint16_t)(1U << BLINK_GPIO_PIN);
  *         - toggle the pin
  *         - block for BLINK_PERIOD_MS using vTaskDelay()
  *         - the task must never return */
-static void vBringup_task(void *argument)
+static void bringup_task(void *argument)
 {
     (void)argument;
 
@@ -36,7 +36,7 @@ void app_main(void)
 {
     /* TODO 3: create bringup_task with stack BRINGUP_STACK_WORDS and a priority
      *         you can justify. Check the return value — do not ignore it. */
-    BaseType_t status = xTaskCreate(vBringup_task, "bring-up", BRINGUP_STACK_WORDS, NULL, 1, NULL);
+    BaseType_t status = xTaskCreate(bringup_task, "bring-up", BRINGUP_STACK_WORDS, NULL, 1, NULL);
     if (status != pdPASS) {
         for (;;) {
             // if create task fail => LED active low
