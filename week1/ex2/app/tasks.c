@@ -24,6 +24,7 @@ void task_a(void *argument)
     (void)argument;
     for (;;) {
         task_run(GPIOA, TASK_A_PIN, TASK_A_WORK_US);
+        
         // vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
@@ -33,6 +34,7 @@ void task_b(void *argument)
     (void)argument;
     for (;;) {
         task_run(GPIOA, TASK_B_PIN, TASK_B_WORK_US);
+
         /* Allow lower-priority tasks to execute */
         // vTaskDelay(pdMS_TO_TICKS(1));
     }
@@ -42,7 +44,7 @@ void task_c(void *argument)
 {
     (void)argument;
     for (;;) {
-        task_run(GPIOA, TASK_C_PIN, TASK_C_WORK_US);
+        task_run(GPIOA, TASK_C_PIN, TASK_C_WORK_US*3);
 
         /* Allow lower-priority tasks to execute */
         // vTaskDelay(pdMS_TO_TICKS(1));
