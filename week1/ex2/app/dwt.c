@@ -20,9 +20,8 @@ void dwt_busy_wait_us(uint32_t microseconds)
      *         SystemCoreClock is 72000000. Handle CYCCNT wrap-around correctly
      *         — unsigned subtraction, not a comparison of absolute values.
      *         Explain in REPORT.md why the naive comparison breaks every ~59 s. */
-    const uint32_t cycles_per_us = 72000000U / 1000000U;
-    const uint32_t cycles = cycles_per_us * microseconds;
     const uint32_t start = DWT->CYCCNT;
+    const uint32_t cycles = (72000000U / 1000000U) * microseconds;
 
     while ((uint32_t)(DWT->CYCCNT - start) < cycles) {/*Busy wait*/}
 }
