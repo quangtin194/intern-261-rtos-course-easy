@@ -1,0 +1,9 @@
+﻿Delay,Tick,Avg Period (ms),Jitter (us),Total Drift (ms)
+vTaskDelay,1000,17.294105,1002,234.99
+xTaskDelayUntil,1000,16.999987,11,-0.01
+vTaskDelay,100,10,2,-5593
+xTaskDelayUntil,100,9.999987,20,-5593.01
+,,,,
+,,,,
+"vTaskDelay
+(cấu hình WORK_JITTER_US = 14ms)",100,12.941164,10011,-3243.01

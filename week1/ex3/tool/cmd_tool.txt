@@ -1,0 +1,4 @@
+
+chạy khi ở trong /tool:
+
+python analyze_ex3_resultcsv.py "../captures/vtaskdelay_1000hz.csv" --period-ms 17 --sample-count 800 --time-column microseconds --result-csv "result.csv" --delay vTaskDelay --tick 1000
