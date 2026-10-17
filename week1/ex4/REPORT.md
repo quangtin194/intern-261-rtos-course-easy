@@ -111,5 +111,7 @@ cụ thể (bytes), rồi chọn một và **thực hiện, đo lại để ch�
     + Cấp phát tĩnh, dùng `xTaskCreateStatic()`: Thường lấy ở phân vùng `.bss`. Chi phí bao gồm: 76 bytes cho TCB và 128 bytes cho stack của task.
 - Chọn một: Chọn cấp phát động. Hiện tại, free heap là 6672 byte. Nếu đúng chi phí dự đoán thì sau khi tạo task, log UART bây giờ sẽ cho lại kết quả Free heap là 6084 byte.
 - Kiểm chứng: 
+
     ![](./verify.png)
+    
 => Lệch 20 byte so với dự đoán. Lý do là bộ cấp phát heap_4.c có thêm overhead để quản lý các block bộ nhớ, bao gồm metadata và phần căn chỉnh kích thước cấp phát...
