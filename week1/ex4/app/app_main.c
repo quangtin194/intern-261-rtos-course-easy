@@ -32,15 +32,19 @@ static void shared_work(void *argument)
 
 static void dyn_task (void *argument) {
     (void)argument;
-    volatile uint8_t arr[HOG_DEPTH_BYTES];
-    for (uint16_t i = 0; i < sizeof(arr); i++) {
-        arr[i] = 0x01;
-    }
+    // volatile uint8_t arr[HOG_DEPTH_BYTES];
+    // for (uint16_t i = 0; i < sizeof(arr); i++) {
+    //     arr[i] = 0x01;
+    // }
     shared_work(argument);
 }
 static void stat_task (void *argument) {
     (void)argument;
     shared_work(argument);
+}
+static void another_task (void *argument) {
+    (void)argument;
+    for (;;) {}
 }
 
 void app_main(void)
@@ -51,8 +55,9 @@ void app_main(void)
      *
      * Check every return value. xTaskCreateStatic returns a handle, not a
      * BaseType_t — explain the difference in REPORT.md. */
-    BaseType_t state_1 = xTaskCreate(dyn_task, "dyn task", DYN_TASK_STACK_WORDS, NULL, 1, &dyn_task_Handle);
+    BaseType_t state_1 = xTaskCreate(dyn_task, "dyn task", (DYN_TASK_STACK_WORDS /* + 3 */), NULL, 1, &dyn_task_Handle);
     BaseType_t state_2 = xTaskCreate(ram_report_task, "ram report task", 200U, NULL, 2, &ram_report_task_Handle);
+    xTaskCreate(another_task, "another task", DYN_TASK_STACK_WORDS, NULL, 1, NULL);
 
     stat_task_Handle = xTaskCreateStatic(stat_task, "stat task", STATIC_TASK_STACK_WORDS, NULL, 1, stat_task_Stack, &stat_task_TCB);
     
