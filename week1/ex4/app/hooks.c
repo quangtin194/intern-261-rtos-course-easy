@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "params.h"
+#include <string.h>
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
@@ -18,7 +19,17 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
      * Hint: this hook runs from the scheduler's context, not the task's.
      */
     (void)xTask;
-    (void)pcTaskName;
+
+    const char msg[] = "STACK OVERFLOW!, Task: ";
+    HAL_UART_Transmit(&huart1, (uint8_t *)msg, sizeof(msg) - 1, 100);
+
+    if (pcTaskName != NULL) {
+        HAL_UART_Transmit(&huart1, (uint8_t *)pcTaskName, strlen(pcTaskName), 100);
+    }
+
+    const char newline[] = "\r\n";
+    HAL_UART_Transmit(&huart1, (uint8_t *)newline, sizeof(newline) - 1, 100);
+
     for (;;) {
     }
 }
@@ -26,29 +37,38 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 void vApplicationMallocFailedHook(void)
 {
     /* TODO 2: report, then stop. */
+    const char msg[] = "FREERTOS MALLOC FAILED!\r\n";
+    HAL_UART_Transmit(&huart1, (uint8_t *)msg, sizeof(msg) - 1, 100);
+
     for (;;) {
     }
 }
 
 /* configSUPPORT_STATIC_ALLOCATION = 1 makes these two callbacks mandatory.
  * Provide the memory for the idle task and the timer task here. */
+static StaticTask_t idleTaskTCB;                             // 76 bytes .bss
+static StackType_t idleTaskStack[STATIC_TASK_STACK_WORDS];   // 128*4 = 512 bytes .bss
+
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
                                    StackType_t **ppxIdleTaskStackBuffer,
                                    uint32_t *pulIdleTaskStackSize)
 {
     /* TODO 3: static buffers. Note the size is in WORDS, not bytes —
      *         getting this wrong is a silent overflow. */
-    (void)ppxIdleTaskTCBBuffer;
-    (void)ppxIdleTaskStackBuffer;
-    (void)pulIdleTaskStackSize;
+    *ppxIdleTaskTCBBuffer = &idleTaskTCB;
+    *ppxIdleTaskStackBuffer = idleTaskStack;
+    *pulIdleTaskStackSize = STATIC_TASK_STACK_WORDS;
 }
+
+static StaticTask_t timerTaskTCB;                            // 76 bytes .bss
+static StackType_t timerTaskStack[STATIC_TASK_STACK_WORDS];  // 128*4 = 512 bytes .bss
 
 void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
                                     StackType_t **ppxTimerTaskStackBuffer,
                                     uint32_t *pulTimerTaskStackSize)
 {
     /* TODO 4: same, for the software timer task. */
-    (void)ppxTimerTaskTCBBuffer;
-    (void)ppxTimerTaskStackBuffer;
-    (void)pulTimerTaskStackSize;
+    *ppxTimerTaskTCBBuffer = &timerTaskTCB;
+    *ppxTimerTaskStackBuffer = timerTaskStack;
+    *pulTimerTaskStackSize = STATIC_TASK_STACK_WORDS;
 }
