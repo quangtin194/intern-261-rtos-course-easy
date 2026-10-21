@@ -20,6 +20,9 @@ typedef struct {
 
 extern QueueHandle_t queue_raw;
 extern QueueHandle_t queue_filtered;
+extern UBaseType_t raw_depth;
+extern UBaseType_t filtered_depth;
+extern TaskHandle_t h_sensor, h_filter, h_uart;
 
 void sensor_task(void *argument);
 void filter_task(void *argument);

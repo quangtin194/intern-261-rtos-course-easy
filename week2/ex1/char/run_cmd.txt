@@ -1,0 +1,1 @@
+PS D:\DOCUMENT\STUDY - OTHERS\RTOS_INTERN\intern-261-rtos-course-easy\week2\ex1\char> python plot_queue.py normal_115200.txt
