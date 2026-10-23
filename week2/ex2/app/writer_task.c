@@ -23,12 +23,18 @@ void writer_task(void *argument)
     for (;;) {
         /* TODO 2 */
         char msg[MSG_LEN];
-        snprintf(msg, sizeof(msg), "ID: %01lu; Seq: %09lu\r\n",
-                (unsigned long)id, (unsigned long)seq);
-        uart_guard_send(msg, MSG_LEN);
+        snprintf(msg, sizeof(msg), "ID: %01lu; Seq: %09lu\r\n", (unsigned long)id, (unsigned long)seq);
+
+        uint32_t t0 = DWT->CYCCNT;
+        #if UART_GUARD_MODE == 3
+            lat_mark(id, t0);
+            uart_guard_send(msg, MSG_LEN);  
+        #elif UART_GUARD_MODE != 3
+            uart_guard_send(msg, MSG_LEN);  
+            lat_record(t0);      
+        #endif
 
         seq++;
-
         vTaskDelay(pdMS_TO_TICKS(WRITER_PERIOD_MS));
     }
 }

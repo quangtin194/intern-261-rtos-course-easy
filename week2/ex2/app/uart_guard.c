@@ -53,6 +53,22 @@ static void uart_raw_send(const char *buf, size_t len)
     while (!(USART1->SR & USART_SR_TC)) { }
 }
 
+//=====
+volatile lat_stat_t g_lat;
+void lat_record(uint32_t t0_cycles)
+{
+    uint32_t d = DWT->CYCCNT - t0_cycles;
+    g_lat.sum += d;
+    g_lat.cnt++;
+    if (d > g_lat.max) g_lat.max = d;
+}
+
+#if UART_GUARD_MODE == 3
+static volatile uint32_t s_t0[WRITER_COUNT];
+void lat_mark(uint32_t id, uint32_t t0) { s_t0[id] = t0; }
+#endif
+// =====
+
 void uart_guard_send(const char *buf, size_t len)
 {
 #if UART_GUARD_MODE == 0
@@ -97,6 +113,8 @@ void gatekeeper_task(void *argument)
          *         HAL_UART_Transmit in this mode. */
         if (xQueueReceive(s_gatekeeper_queue, msg, portMAX_DELAY) == pdPASS) {
             uart_raw_send(msg, MSG_LEN);
+            uint32_t id = (uint32_t)(msg[4] - '0');
+            if (id < WRITER_COUNT) lat_record(s_t0[id]);
         }
     }
 }
