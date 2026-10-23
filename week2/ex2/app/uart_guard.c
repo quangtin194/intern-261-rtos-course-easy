@@ -20,11 +20,37 @@ void uart_guard_init(void)
 {
 #if UART_GUARD_MODE == 1
     /* TODO 1: xSemaphoreCreateMutex(). Check for NULL. */
+    s_uart_mutex = xSemaphoreCreateMutex();
+    configASSERT(s_uart_mutex != NULL);
+
 #elif UART_GUARD_MODE == 3
     /* TODO 2: create s_gatekeeper_queue (length: pick and justify in
      *         REPORT.md), item size = MSG_LEN bytes.
      *         xTaskCreate(gatekeeper_task, ..., GATEKEEPER_PRIO). */
+    s_gatekeeper_queue = xQueueCreate(WRITER_COUNT, MSG_LEN);
+    configASSERT(s_gatekeeper_queue != NULL);
+
+    BaseType_t status = xTaskCreate(gatekeeper_task, "Gate keeper", 200U, NULL, GATEKEEPER_PRIO, NULL);
+    configASSERT(status == pdPASS);
+
 #endif
+}
+
+// static void uart_raw_send(const char *buf, size_t len)
+// {
+//     for (size_t i = 0; i < len; i++) {
+//         HAL_UART_Transmit(&huart1, (uint8_t *)&buf[i], 1U, HAL_MAX_DELAY);
+//         taskYIELD();
+//     }
+// }
+
+static void uart_raw_send(const char *buf, size_t len)
+{
+    for (size_t i = 0; i < len; i++) {
+        while (!(USART1->SR & USART_SR_TXE)) { }
+        USART1->DR = (uint8_t)buf[i];
+    }
+    while (!(USART1->SR & USART_SR_TC)) { }
 }
 
 void uart_guard_send(const char *buf, size_t len)
@@ -32,24 +58,31 @@ void uart_guard_send(const char *buf, size_t len)
 #if UART_GUARD_MODE == 0
     /* The bug: no serialization at all. */
     /* TODO 3: HAL_UART_Transmit directly. */
-    (void)buf; (void)len;
+    uart_raw_send(buf, len);
 
 #elif UART_GUARD_MODE == 1
     /* TODO 4: xSemaphoreTake(s_uart_mutex, portMAX_DELAY), transmit, Give.
      *         Every return path must Give — no early return between Take and
      *         Give. */
-    (void)buf; (void)len;
+    if (xSemaphoreTake(s_uart_mutex, portMAX_DELAY) == pdPASS) 
+    {
+        uart_raw_send(buf, len);
+        xSemaphoreGive(s_uart_mutex);
+    }
 
 #elif UART_GUARD_MODE == 2
     /* TODO 5: taskENTER_CRITICAL(), transmit, taskEXIT_CRITICAL().
      *         Measure in REPORT.md how long the critical section holds IRQs
      *         off, as a function of MSG_LEN and UART_BAUD. */
-    (void)buf; (void)len;
+    taskENTER_CRITICAL();
+    uart_raw_send(buf, len);
+    taskEXIT_CRITICAL();
 
 #elif UART_GUARD_MODE == 3
     /* TODO 6: xQueueSend(s_gatekeeper_queue, buf, portMAX_DELAY).
      *         The writer never touches UART directly in this mode. */
-    (void)buf; (void)len;
+    xQueueSend(s_gatekeeper_queue, buf, portMAX_DELAY);
+
 #endif
 }
 
@@ -62,7 +95,9 @@ void gatekeeper_task(void *argument)
         /* TODO 7: xQueueReceive(s_gatekeeper_queue, msg, portMAX_DELAY), then
          *         HAL_UART_Transmit. This is the only task allowed to call
          *         HAL_UART_Transmit in this mode. */
-        (void)msg;
+        if (xQueueReceive(s_gatekeeper_queue, msg, portMAX_DELAY) == pdPASS) {
+            uart_raw_send(msg, MSG_LEN);
+        }
     }
 }
 #endif

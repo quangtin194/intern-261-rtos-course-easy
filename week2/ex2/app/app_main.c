@@ -17,6 +17,10 @@ void app_main(void)
     /* TODO: xTaskCreate WRITER_COUNT instances of writer_task, each given its
      *       own index (0..WRITER_COUNT-1) as the task parameter.
      *       Do not create WRITER_COUNT separately-named functions. */
+    for (uint32_t i = 0; i < WRITER_COUNT; i++) {
+        BaseType_t status = xTaskCreate(writer_task, "Write task", 128U, (void *)(uintptr_t)i, 1, NULL);
+        configASSERT(status == pdPASS);
+    }
 
     vTaskStartScheduler();
 

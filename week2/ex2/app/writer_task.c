@@ -18,11 +18,17 @@ void writer_task(void *argument)
 {
     uint32_t id = (uint32_t)(uintptr_t)argument;
     uint32_t seq = 0;
-    (void)id;
+
 
     for (;;) {
         /* TODO 2 */
-        (void)seq;
+        char msg[MSG_LEN];
+        snprintf(msg, sizeof(msg), "ID: %01lu; Seq: %09lu\r\n",
+                (unsigned long)id, (unsigned long)seq);
+        uart_guard_send(msg, MSG_LEN);
+
+        seq++;
+
         vTaskDelay(pdMS_TO_TICKS(WRITER_PERIOD_MS));
     }
 }
