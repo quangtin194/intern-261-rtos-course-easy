@@ -12,7 +12,6 @@ void app_main(void)
 {
     resource_init();
     BaseType_t status;
-
     /* TODO: xTaskCreate task_low, task_mid, task_high with three DISTINCT
      *       priorities, low < mid < high. Justify the exact numbers in
      *       REPORT.md — they must leave room for configMAX_PRIORITIES and not
