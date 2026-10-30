@@ -16,6 +16,16 @@ void sync_init(void);
 void producer_task(void *argument); /* argument = producer index 0..EVENT_BIT_COUNT-1 */
 void sync_task(void *argument);
 
+#ifndef ANOTHER_TASK
+#define ANOTHER_TASK 0
+void another_task(void *argument);
+extern TaskHandle_t another_task_handle;
+#endif
+
+#ifndef SYNC_TASK_TIMEOUT
+#define SYNC_TASK_TIMEOUT 0
+#endif
+
 /* Handle of sync_task, needed by producer_0 to call xTaskNotifyGive when
  * PRODUCER0_USE_NOTIFY is set. */
 extern void *sync_task_handle;
