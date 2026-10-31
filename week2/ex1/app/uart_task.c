@@ -16,7 +16,6 @@
 void uart_task(void *argument)
 {
     (void)argument;
-
     for (;;) {
         filtered_sample_t in;
 
@@ -38,5 +37,7 @@ void uart_task(void *argument)
         if ((len > 0) && (len < sizeof(buffer))) {
             HAL_UART_Transmit(&huart1,(uint8_t *)buffer, (uint16_t)len, HAL_MAX_DELAY);
         }
+
+        // HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_0);   // Ghi nhận chu kỳ từ sens -> UART
     }
 }

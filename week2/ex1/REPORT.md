@@ -46,3 +46,33 @@ Phần dự đoán kích thước queue tối thiểu không có sai lệch. D�
 
 ## 6. Câu hỏi đánh đổi
 Với `SAMPLE_PERIOD_MS` của **bạn**, nếu `FILTER_WINDOW` tăng gấp đôi thì độ trễ từ cảm biến đến UART tăng thêm bao nhiêu ms? Trả lời bằng số từ dữ liệu của bạn, rồi đo lại để kiểm chứng.
+
+**Trả lời:** 
+- Với `SAMPLE_PERIOD_MS = 5ms`, khi tăng `FILTER_WINDOW` từ 4 lên 8, **chu kỳ cập nhật kết quả lọc vẫn giữ nguyên 5 ms** vì bộ lọc Moving Average được cập nhật ngay khi mỗi mẫu mới được nhận. Tuy nhiên, **độ trễ nhóm của bộ lọc tăng lên**. Cụ thể:
+    - **Độ trễ nhóm:** Tín hiệu sau lọc phản ánh sự thay đổi của tín hiệu đầu vào chậm hơn so với tín hiệu gốc. Đối với cửa số N mẫu, độ trễ nhóm được tính bằng công thức.
+        ```
+        t = ((N - 1)/2) * T_s
+
+        Trong đó: T_s = SAMPLE_PERIOD_MS = 5ms
+        ```
+    - Với `N = 4`: t = 7.5 ms
+    - Với `N = 8`: t = 17.5 ms
+    
+    => **Độ trễ nhóm tăng thêm 10 ms.**
+- Đồng thời, thời gian tích lũy mẫu cũng sẽ chậm đi:
+    - Với `N = 4`: Thời gian tích lũy là 5*4 = 20 ms
+    - Với `N = 8`: Thời gian tích lũy là 5*8 = 40 ms
+
+    => **Độ trễ tích lũy tăng thêm 20 ms.**
+
+- **Kiểm chứng:**
+    + Chu kỳ cập nhật kết quả lọc vẫn giữ nguyên 5 ms, dù có tăng `FILTER_WINDOW` hay không:
+        + `FILTER_WINDOW = 4`
+![](./char/report_q6_1.png)
+        + `FILTER_WINDOW = 8`
+![](./char/report_q6_2.png)
+    + Độ trễ tích lũy tăng thêm 20ms:
+        + `FILTER_WINDOW = 4`
+![](./char/report_q6_3.png)
+        + `FILTER_WINDOW = 8`
+![](./char/report_q6_4.png)

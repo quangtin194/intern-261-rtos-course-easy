@@ -8,6 +8,7 @@
 #include "main.h"
 #include "params.h"
 #include "pipeline.h"
+#include <stm32f103xb.h>
 
 void filter_task(void *argument)
 {
@@ -26,6 +27,7 @@ void filter_task(void *argument)
 
     uint8_t index = 0;
     uint8_t count = 0;
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, 1);    // Đo thời gian tích lũy: Bắt đầu tích lũy
 
     for (;;) {
         raw_sample_t in;
@@ -39,6 +41,7 @@ void filter_task(void *argument)
         }
         else if (count == FILTER_WINDOW)
         {
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, 0);  // Đo thời gian tích lũy: Kết thúc tích lũy (đủ)
             ax_sum -= ax_buf[index];
             ay_sum -= ay_buf[index];
             az_sum -= az_buf[index];
