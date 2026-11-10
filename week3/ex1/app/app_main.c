@@ -16,6 +16,7 @@ void app_main(void)
      *       the thing that actually determines your measured latency, not
      *       scheduling jitter from something else. Justify the number in
      *       REPORT.md. */
+    xTaskCreate(ack_task, "AckTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
     vTaskStartScheduler();
 
