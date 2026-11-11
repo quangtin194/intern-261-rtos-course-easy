@@ -13,7 +13,7 @@ void app_main(void)
     /* TODO: GPIO init for the button pin as EXTI, both edges
      *       (GPIO_MODE_IT_RISING_FALLING) -- you need every bounce edge, not
      *       just the first one. */
-
+    // Đã cấu hình trong CubeMX và gen code ra
     debounce_init();
 
     vTaskStartScheduler();
