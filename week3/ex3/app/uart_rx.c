@@ -12,6 +12,7 @@
 StreamBufferHandle_t rx_stream;
 
 static uint8_t s_rx_byte;
+volatile uint32_t rx_dropped = 0;
 
 void uart_rx_init(void)
 {
@@ -21,6 +22,10 @@ void uart_rx_init(void)
      * TODO 2: HAL_UART_Receive_IT(&huart1, &s_rx_byte, 1) to arm the first
      *         byte. huart1 must already be MX_USART1_UART_Init()'d at
      *         RX_BAUD -- that part lives in template/, not here. */
+    rx_stream = xStreamBufferCreate(STREAM_BUFFER_BYTES, TRIGGER_LEVEL);
+    configASSERT(rx_stream != NULL);
+
+    HAL_UART_Receive_IT(&huart1, &s_rx_byte, 1);
 }
 
 void uart_rx_isr_handler(void)
@@ -37,5 +42,11 @@ void uart_rx_isr_handler(void)
      *         to silently stop receiving after the first byte. */
 
     /* TODO 5: portYIELD_FROM_ISR(xHigherPriorityTaskWoken). */
-    (void)xHigherPriorityTaskWoken;
+    if (!xStreamBufferSendFromISR(rx_stream, &s_rx_byte, 1,&xHigherPriorityTaskWoken)) 
+    {
+        rx_dropped++;   // Ghi nhận số byte đã bị bỏ qua khi stream buffer đầy
+        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);
+    }
+    HAL_UART_Receive_IT(&huart1, &s_rx_byte, 1);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

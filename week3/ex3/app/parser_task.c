@@ -17,6 +17,7 @@
 #include "params.h"
 #include "uart_rx.h"
 #include "parser_task.h"
+#include <stdlib.h>
 
 static TaskHandle_t s_demo_task_handle;
 static volatile uint32_t s_demo_period_ms = 200;
@@ -28,8 +29,36 @@ static void apply_command(const char *cmd, size_t len)
      *         'S' -> parse decimal, vTaskPrioritySet(s_demo_task_handle, n);
      *         'T' -> cmd[1]=='0' ? vTaskSuspend(...) : vTaskResume(...).
      *         Ignore anything malformed -- do not crash on bad input. */
-    (void)cmd;
-    (void)len;
+    if (len == 0) return;
+    switch (cmd[0])
+    {
+    case 'P':
+        if (len > 1 && cmd[1] >= '0' && cmd[1] <= '9') {
+            char *endptr;
+            uint32_t new_period = strtoul(&cmd[1], &endptr, 10);
+            if (*endptr == '\0' || *endptr == '#') {
+                s_demo_period_ms = new_period;
+            }
+        }
+        break;
+    case 'S':
+        if (len > 1 && cmd[1] >= '0' && cmd[1] <= '9') {
+            char *endptr;
+            unsigned long n = strtoul(&cmd[1], &endptr, 10);
+            if ((*endptr == '\0' || *endptr == '#') && n < configMAX_PRIORITIES) {
+                vTaskPrioritySet(s_demo_task_handle, (UBaseType_t)n);
+            }
+        }
+        break;
+    case 'T':
+        if (len > 1 && (cmd[2] == '\0' || cmd[2] == '#')) {
+            if (cmd[1] == '0')      vTaskSuspend(s_demo_task_handle);
+            else if (cmd[1] == '1') vTaskResume(s_demo_task_handle);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void parser_task(void *argument)
@@ -37,6 +66,7 @@ void parser_task(void *argument)
     (void)argument;
     char cmd[MAX_CMD_LEN];
     size_t idx = 0;
+    uint8_t discarding = 0;
 
     for (;;) {
         uint8_t byte;
@@ -48,9 +78,27 @@ void parser_task(void *argument)
          *         else (overflow): discard the whole partial command, idx = 0
          *         -- explain in REPORT.md why silently truncating instead
          *         would be worse. */
-        (void)byte;
-        (void)cmd;
-        (void)idx;
+        // HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_7);  // check workload
+
+        xStreamBufferReceive(rx_stream, &byte, 1, portMAX_DELAY);
+        if (byte == '\r')
+        {
+            if (!discarding) {
+                cmd[idx] = '\0';
+                apply_command(cmd, idx);
+            }
+            idx = 0;
+            discarding = 0;
+        } else if (byte == '\n' || discarding) {
+            /* bỏ qua */
+        } else if (idx < MAX_CMD_LEN - 1)
+        {
+            cmd[idx++] = byte;
+        } else {
+            idx = 0;
+            discarding = 1;
+        }
+        // HAL_Delay(1);  // check workload
     }
 }
 
@@ -61,6 +109,8 @@ void demo_task(void *argument)
 
     for (;;) {
         /* TODO 4: toggle a GPIO pin here. */
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        // HAL_Delay(s_demo_period_ms);
         vTaskDelay(pdMS_TO_TICKS(s_demo_period_ms));
     }
 }
