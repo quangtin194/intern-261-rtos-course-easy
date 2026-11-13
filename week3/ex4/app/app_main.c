@@ -19,6 +19,10 @@ void app_main(void)
     /* TODO: xTaskCreate task_alpha, task_beta, supervisor_task,
      *       runtime_stats_task. Run deadlock_demo exactly as given first
      *       (step 2 of README) before touching task_alpha/task_beta. */
+    xTaskCreate(task_alpha, "alpha", 256, NULL, 2, NULL);
+    xTaskCreate(task_beta, "beta", 256, NULL, 2, NULL);
+    xTaskCreate(supervisor_task, "super", 256, NULL, 3, NULL);
+    xTaskCreate(runtime_stats_task, "stats", 384, NULL, 1, NULL);
 
     vTaskStartScheduler();
 

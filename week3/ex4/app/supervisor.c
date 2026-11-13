@@ -21,6 +21,10 @@ void supervisor_init(void)
      * TODO 2: HAL IWDG init here (IWDG_TIMEOUT_MS -> prescaler + reload per
      *         RM0008 IWDG chapter; IWDG runs off LSI, ~40 kHz, compute the
      *         reload value and show the computation in REPORT.md). */
+    supervisor_events = xEventGroupCreate();
+    configASSERT(supervisor_events != NULL);
+
+    // IWDG đã được khởi tạo trong hàm MX_IWDG_Init() trong main.c, nên không cần khởi tạo lại ở đây
 }
 
 void supervisor_task(void *argument)
@@ -39,5 +43,9 @@ void supervisor_task(void *argument)
          *         the call returned), HAL_IWDG_Refresh(&hiwdg). Otherwise do
          *         NOTHING -- that is what lets IWDG_TIMEOUT_MS expire and
          *         reset the board when a task stops checking in. */
+        EventBits_t bits = xEventGroupWaitBits(supervisor_events, ALL_BITS, pdTRUE, pdTRUE, pdMS_TO_TICKS(IWDG_TIMEOUT_MS / 2));
+        if ((bits & ALL_BITS) == ALL_BITS) {
+            HAL_IWDG_Refresh(&hiwdg);
+        }
     }
 }
