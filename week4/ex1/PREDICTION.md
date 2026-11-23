@@ -8,8 +8,11 @@
 
 **Trả lời:** 
 - Với `SAMPLE_RATE_HZ = 400Hz`, chu kỳ lấy mẫu là 1/400Hz = 2.5 (ms) = 2500 (us).
-- Note: "Task xử lý kịp `ISR_TO_PROC_DEADLINE_US`" ở đây được hiểu là khoảng thời gian chuyển từ ISR sang Produce task, không tính thời gian I2C lấy mẫu.
-- **Dự đoán** Latency ISR -> task em đo được ở week3/ex1 khoảng 12.99 us (trường hợp có `portYIELD_FROM_ISR()`), so với `ISR_TO_PROC_DEADLINE_US = 300 us` thì latency nhỏ hơn rất nhiều, nên sẽ đáp ứng kịp deadline.
+- Note: "Task xử lý kịp `ISR_TO_PROC_DEADLINE_US`" ở đây được hiểu là khoảng thời gian chuyển từ I2C ISR sang Process task (tức là sau khi I2C đã đọc sensor thành công và phát ngắt I2C, rồi callback I2C xử lý ghép byte + gửi lên Queue1, nên không tính thời gian I2C lấy mẫu) + thời gian workload của Process task.
+- **Dự đoán** 
+   + Latency ISR -> task em đo được ở week3/ex1 khoảng 12.99 us (trường hợp có `portYIELD_FROM_ISR()`)
+   + Giải thuật xử lý mẫu trong Process task dự tính sử dụng là bộ lọc trung bình trượt, tương đối đơn giản nên sẽ không tốn nhiều chu kỳ CPU, cộng thêm thời gian `xQueueReceive` từ Queue 1 và `xQueueSend` ra Queue 2 => ước tính khoảng **1000 chu kỳ CPU** => Với cấu hình 72MHz, dự tính tổng thời gian workload của Process task sẽ mất khoảng 1000 / 72Mhz = 13.89 (us). 
+   + Tổng thời gian từ lúc chuyển context ISR đến sau khi Process task chạy xong khoảng 12.99 + 13.89 = 26.88 (us), bé hơn nhiều so với `ISR_TO_PROC_DEADLINE_US = 300 us`, nên sẽ đáp ứng kịp deadline.
 
 2. Dự đoán tổng RAM (queue + stack mọi task) theo thiết kế của bạn, tính
    bằng bytes. So với `MAX_HEAP_BYTES`: còn dư bao nhiêu?
@@ -35,6 +38,6 @@
 
 **Trả lời:** 
 - **Dự đoán:** thứ tự Process task (priority 2) > UART task (priority 1) cho kết quả đạt deadline tốt hơn. ISR luôn chạy trước mọi task vì nó chạy ở mức ngắt phần cứng.
-- **Giải thích:** deadline tính từ callback hoàn tất I2C đến lúc Process bắt đầu xử lý.
-  + Nếu Process > UART: khi callback gọi `xQueueSendFromISR` + `portYIELD_FROM_ISR`, Process chuyển sang Ready và chen ngay vào UART đang chạy. Latency = 12.99 us (số đo ở week3/ex1), nhỏ hơn nhiều so với 300 us.
-  + Nếu UART > Process: khi UART đang gửi khối 1024 byte ở 115200 baud (= 1024 * 10 / 115200 ≈ 88,9 ms), Process không chen vào được, phải chờ UART nhường CPU. Latency có thể lên tới hàng chục ms, vượt xa 300 µs.
+- **Giải thích:** deadline tính từ callback hoàn tất I2C đến lúc Process xử lý xong.
+  + Nếu Process > UART: khi callback gọi `xQueueSendFromISR` + `portYIELD_FROM_ISR`, Process task chuyển sang Ready và chen ngay vào UART task đang chạy. Đây là trường hợp em đã phân tích ở câu 1 phía trên (26.88 us << 300 us), nên sẽ kịp deadline.
+  + Nếu UART > Process: khi UART đang gửi khối 1024 byte ở 115200 baud (= 1024 * 10 / 115200 ≈ 88.9 ms), Process không chen vào được, phải chờ UART nhường CPU. Latency có thể lên tới hàng chục ms, vượt xa 300 µs.
