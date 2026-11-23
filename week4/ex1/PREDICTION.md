@@ -18,12 +18,12 @@
    bằng bytes. So với `MAX_HEAP_BYTES`: còn dư bao nhiêu?
 
 **Trả lời:** 
-- **Giả định:** mỗi mẫu `sensor_sample_t` 16 byte (6 trục `int16_t` = 12 byte + timestamp 4 byte); TCB 76 byte (đã đo ở week1/ex4); overhead heap_4 = 14 byte mỗi lần cấp phát; phần quản lý queue (`Queue_t`) = 76 byte.
+- **Giả định:** mỗi mẫu `sensor_sample_t` 16 byte (6 trục `int16_t` = 12 byte + timestamp 4 byte); TCB 76 byte (đã đo ở week1/ex4); heap_4 thêm header 8 byte mỗi lần cấp phát và làm tròn lên bội số của 8, nên overhead là TCB 12 byte, stack 8 byte (20 byte mỗi task) và 12 byte mỗi queue; phần quản lý queue (`Queue_t`) = 76 byte; Idle task được cấp phát động từ heap.
 - **Tính toán:**
    + **RAM cho task:** 3 task (Process, UART, Idle), mỗi task stack 128 words = 512 byte + TCB 76 byte + overhead 20 byte = 608 byte => 3 * 608 = **1824 byte**. Không dùng software timer nên không có Timer task.
-   + **RAM cho queue:** Queue 1: 16 * 16 + 76 + 12 = **344 byte**; Queue 2: 64 * 16 + 76 + 12 = **1112 byte**; buffer gom khối 64 mẫu: 1024 + 8 = **1032 byte**. Tổng = **2488 byte**.
-   + **Tổng RAM** = 1824 + 2488 = **4312 byte**.
-- **So sánh:** `MAX_HEAP_BYTES` = 10240 byte, còn dư 10240 − 4312 = **5928 byte** (= 57.9%).
+   + **RAM cho queue:** Queue 1: 16 * 16 + 76 + 12 = **344 byte**; Queue 2: 64 * 16 + 76 + 12 = **1112 byte**.
+   + **Tổng RAM** = 1824 + 344 + 1112 = **3280 byte**.
+- **So sánh:** `MAX_HEAP_BYTES` = 10240 byte, còn dư 10240 − 3280 = **6960 byte**.
 
 3. Nếu task xử lý tạm thời chậm hơn ISR lấy mẫu (ví dụ do một task khác
    chiếm CPU), hàng đợi của bạn đầy sau bao nhiêu mẫu? Điều gì xảy ra với
